@@ -113,8 +113,10 @@ def create_single_hit(mturk_connection, url, static_hit_params):
 
 
 def create_hits_from_pages(mturk_connection, page_links, static_hit_params):
+    hitResults = []
     for url in page_links:
-        create_single_hit(mturk_connection, url, static_hit_params)
+        hitResults.append(create_single_hit(mturk_connection, url, static_hit_params))
+    return hitResults
     
 
 def delete_all_hits(mturk_connection):
