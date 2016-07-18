@@ -1,19 +1,6 @@
-# %%capture
-from __future__ import division
-import numpy as np
-import pandas as pd
-import scipy.stats as st
-import itertools
-import math
-from collections import Counter, defaultdict
-# %load_ext autoreload
-# %autoreload 2
+__author__ = 'Jonghyun Choi'
+__email__ = "jonghyunc@allenai.org"
 
-#The lines commented below set the look and feel of mpl generated plots.
-import matplotlib as mpl
-
-import re
-import pickle
 import boto
 import json
 import os
@@ -24,10 +11,20 @@ import pdb
 
 
 import amt_utils.process_hits as amt_util
-
 import argparse
 
+
 parser = argparse.ArgumentParser(description='Upload HITs to the mturk')
+
+def genFilelist():
+    # parse annotated categories
+    try:
+        with open('/Users/jonghyunc/src/vision/datasets/shining3/categories.json', 'r') as file:
+            categorydict = json.load(file)
+    except Exception as e:
+        print(e)
+        return None
+    return categorydict
 
 
 if __name__ == '__main__':
@@ -61,38 +58,32 @@ if __name__ == '__main__':
         'max_assignments': 3   # change to 3 when running for real
     }
 
-    # TODO: parse it from the file
-    pages_to_use = ["https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=61.png&imageType=waterCNPCycle",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=787.png&imageType=waterCNPCycle",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1262.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1266.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1267.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1268.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1275.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1308.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1309.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1310.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1311.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1314.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1316.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1321.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1474.png&imageType=volcano",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1480.png&imageType=waterCNPCycle",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1484.png&imageType=waterCNPCycle",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1485.png&imageType=waterCNPCycle",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1487.png&imageType=waterCNPCycle",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1489.png&imageType=waterCNPCycle",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1493.png&imageType=waterCNPCycle",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1494.png&imageType=waterCNPCycle",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1495.png&imageType=waterCNPCycle",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1498.png&imageType=waterCNPCycle",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1502.png&imageType=waterCNPCycle",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=1503.png&imageType=waterCNPCycle",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=4095.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=4107.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=4141.png&imageType=photosynthesisRespiration",
-                    "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image=5021.png&imageType=waterCNPCycle"
-                    ]
+    # read categories.json
+    categorydict = genFilelist()
+    # read filelist to annotate
+    with open('/Users/jonghyunc/src/vision/datasets/shining3-potential/file_to_annotate_blobs_bg.txt', 'r') as f:
+        lines = [line.rstrip() for line in f]
 
-    # create the HIT
-    amt_util.create_hits_from_pages(mturk, pages_to_use, static_params)
+    # get a list of duplicated images
+    with open('/Users/jonghyunc/src/vision/utils/bin/dup.txt', 'r') as f:
+        dups = [line.rstrip() for line in f]
+
+    # generate pages to use
+    pages_to_use = []
+    for f in lines:
+        if "../../datasets/shining3/images/"+f in dups:
+            print(f,'is duplicated image')
+        else:
+            pages_to_use.append("https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image="+f+"&imageType="+categorydict[f])
+
+    print(len(pages_to_use),'will be created for turkers to annotate')
+
+    # # # create the HIT
+    results = amt_util.create_hits_from_pages(mturk, pages_to_use, static_params)
+    print(len(pages_to_use), "turker's job has been created")
+
+    hitIds = [str(result[0].HITId) for result in results]
+    print("all HITIds:", hitIds)
+    with open('hitidlist_blobs_bg.txt', 'w') as f:
+        for hitid in hitIds:
+            f.write("%s\n" % hitid)
