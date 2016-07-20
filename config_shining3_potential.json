@@ -1,6 +1,6 @@
 {
     "sandbox_or_real": "sandbox",
-    "category-annotation-fn": "/Users/jonghyunc/src/vision/datasets/shining3/categories.json",
+    "category_annotation_fn": "/Users/jonghyunc/src/vision/datasets/shining3-potential/categories.json",
     "static_params": {
         "title": "Annotate Background of a Diagram",
         "description": "Outline the background of a diagram from the questions from a grade-school science",

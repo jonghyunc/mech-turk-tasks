@@ -1,10 +1,11 @@
 __author__ = 'Jonghyun Choi'
 __email__ = "jonghyunc@allenai.org"
 
-import json
+import simplejson as json
 import boto.mturk.connection as tc
 import amt_utils.process_hits as amt_util
 import argparse
+import sys
 
 import pdb
 
@@ -16,10 +17,10 @@ def parseArguments():
     return args
 
 
-def genFilelist():
+def genFilelist(fn):
     # parse annotated categories
     try:
-        with open('/Users/jonghyunc/src/vision/datasets/shining3/categories.json', 'r') as file:
+        with open(fn, 'r') as file:
             categorydict = json.load(file)
     except Exception as e:
         print(e)
@@ -31,51 +32,63 @@ def genFilelist():
 if __name__ == '__main__':
     params = parseArguments()
 
-    sandbox_host = 'mechanicalturk.sandbox.amazonaws.com'
-    real_world_host = 'mechanicalturk.amazonaws.com'
+    params_json = None
+    with open(params.configfile, 'r') as f:
+        params_json = json.load(f)
 
+    if params_json == None:
+        sys.exit()
+
+    # read categories annotation file
+    categorydict = genFilelist(params_json["category_annotation_fn"])
+
+    #
+    hosturl = None
+    if params_json["sandbox_or_real"] == "sandbox":
+        print("Working in the SANDBOX with")
+        hosturl = 'mechanicalturk.sandbox.amazonaws.com'
+    elif params_json["sandbox_or_real"] == "real":
+        print("Working in the REAL WORLD with")
+        hosturl = 'mechanicalturk.amazonaws.com'
+    else:
+        print("error: unknown turk - %s" % params_json["sandbox_or_real"] )
+        sys.exit()
+    #
     mturk = tc.MTurkConnection(  # CAUTION: make sure your environmental variables for credential are set
-        if params.sandbox:
-            host = sandbox_host,
-        else:
-            host = real_world_host,
+        host = hosturl,
         debug = 1 # debug = 2 prints out all requests.
     )
+
+    # print balance
     current_account_balance = mturk.get_account_balance()[0]
-    if current_account_balance.amount == 10000 and params.sandbox:
-        print "Working in the SANDBOX with"
-    else:
-        print "Working in the REAL WORLD with"
     print current_account_balance # a reminder of sandbox
 
     static_params = {
-        'title': "Annotate Background of a Diagram",
-        'description': "Outline the background of a diagram from the questions from a grade-school science",
-        'keywords': ['image', 'annotation', 'background' ],
-        'frame_height': 800,
-        'amount': 0.02,  # todo: should be input
-        'duration': 3600 * 12,
-        'lifetime': 3600 * 24 * 3,
-        'max_assignments': 3   # change to 3 when running for real
+        'title': params_json['static_params']['title'],
+        'description': params_json['static_params']['description'],
+        'keywords': params_json['static_params']['keywords'],
+        'frame_height': eval(params_json['static_params']['frame_height']),
+        'amount': eval(params_json['static_params']['amount']),
+        'duration': eval(params_json['static_params']['duration']),
+        'lifetime': eval(params_json['static_params']['lifetime']),
+        'max_assignments': eval(params_json['static_params']['max_assignments'])
     }
 
-    # read categories.json
-    categorydict = genFilelist()
     # read filelist to annotate
-    with open('/Users/jonghyunc/src/vision/datasets/shining3-potential/file_to_annotate_blobs_bg.txt', 'r') as f:
+    with open(params_json["file_to_annotate"], 'r') as f:
         lines = [line.rstrip() for line in f]
 
     # get a list of duplicated images
-    with open('/Users/jonghyunc/src/vision/utils/bin/dup.txt', 'r') as f:
+    with open(params_json["duplicated_files"], 'r') as f:
         dups = [line.rstrip().split('/')[-1] for line in f]
 
     # generate pages to use
     pages_to_use = []
     for f in lines:
-        if "../../datasets/shining3/images/"+f in dups:  # todo
+        if f in dups:  # todo
             print(f,'is duplicated image')
         else:
-            pages_to_use.append("https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html?image="+f+"&imageType="+categorydict[f])
+            pages_to_use.append(params_json['webpage_url']+"?image="+f+"&imageType="+categorydict[f])
 
     print(len(pages_to_use),'will be created for turkers to annotate')
 
@@ -85,6 +98,6 @@ if __name__ == '__main__':
 
     hitIds = [str(result[0].HITId) for result in results]
     print("all HITIds:", hitIds)
-    with open('hitidlist_blobs_bg.txt', 'w') as f:
+    with open(params_json["hit_id_output_file"], 'w') as f:
         for hitid in hitIds:
             f.write("%s\n" % hitid)
