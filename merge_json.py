@@ -14,6 +14,8 @@ import pdb
 
 from shutil import copyfile
 
+# overwrite "blobs" field in the json files in the target directory by the json files in the source directory
+
 src = '/Users/jonghyunc/src/mech-turk-tasks/jsonout_more_20160715_morning/'
 tgt = '/Users/jonghyunc/src/mech-turk-tasks/jsonout/'
 

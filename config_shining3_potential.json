@@ -1,0 +1,18 @@
+{
+    "sandbox_or_real": "sandbox",
+    "category-annotation-fn": "/Users/jonghyunc/src/vision/datasets/shining3/categories.json",
+    "static_params": {
+        "title": "Annotate Background of a Diagram",
+        "description": "Outline the background of a diagram from the questions from a grade-school science",
+        "keywords": ["image", "annotation", "background" ],
+        "frame_height": "800",
+        "amount": "0.02",
+        "duration": "3600 * 12",
+        "lifetime": "3600 * 24 * 3",
+        "max_assignments": "3"
+    },
+    "file_to_annotate": "/Users/jonghyunc/src/vision/datasets/shining3-potential/file_to_annotate_blobs_bg_tmp.txt",
+    "duplicated_files": "/Users/jonghyunc/src/vision/datasets/shining3-potential/dup_shining3.txt",
+    "webpage_url": "https://s3-us-west-2.amazonaws.com/ai2-vision-turk-data/blobs-bg-3/html/objectPolygonsRound1/image_annotation3.html",
+    "hit_id_output_file": "hitidlist_blobs_bg2.txt"
+}
