@@ -24,8 +24,9 @@ The boto modules that interact with mech-turk haven't been ported to python3 yet
 compatible with python 2.7. Thus, setup a python 2.7 virtual env for running this.
 
 ### Usage
-
-python mturk_annotation.py -config config_shining3_potential.json
+```
+$ python mturk_annotation.py -config config_shining3_potential.json
+```
 
 ### Format of configuration file (-config) (json format)
 
