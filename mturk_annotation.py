@@ -13,6 +13,7 @@ import pdb
 def parseArguments():
     parser = argparse.ArgumentParser(description='Upload HITs to the mturk')
     parser.add_argument('-config', '--configfile', help='Configuration file', required=True)
+    parser.add_argument('-block', '--blockworkers', help='Block blacklist', required=False)
     args = parser.parse_args()
     return args
 
@@ -96,6 +97,13 @@ if __name__ == '__main__':
     results = amt_util.create_hits_from_pages(mturk, pages_to_use, static_params)
     print(len(pages_to_use), "turker's job has been created")
 
+    # block workers in the blacklist
+    with open(params.blockworkers, 'r') as f:
+        blocklist_workers = [line.rstrip() for line in f]
+    for blocklist_worker in blocklist_workers:
+        mturk.block_worker(blocklist_worker)
+
+    #
     hitIds = [str(result[0].HITId) for result in results]
     print("all HITIds:", hitIds)
     with open(params_json["hit_id_output_file"], 'w') as f:

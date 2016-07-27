@@ -18,10 +18,13 @@ def parseArguments():
     parser.add_argument('-in', '--imageDir', help='Directory containing images', required=True)
     parser.add_argument('-hid', '--hitId', help='HIT ID', required=False)
     parser.add_argument('-hidf', '--hitIdFile', help='HIT ID File', required=False)
+    parser.add_argument('-wid', '--workerId', help='worker ID to retrieve the jobs', required=False)
     args = parser.parse_args()
     return args
 
 
+keymap = {49: '1', 50: '2', 51: '3', 52: '4', 53: '5', 54: '6', 55: '7', 56: '8', 57: '9', 58: 'a', 117: 'u', 85: 'u',
+          105: 'i', 73: 'i'}
 
 if __name__ == '__main__':
     params = parseArguments()
@@ -68,8 +71,6 @@ if __name__ == '__main__':
         sys.exit()
 
     print("# annotations are submitted:", len(assignment_results_current_batch))
-
-    keymap = {49:'1', 50:'2', 51:'3', 52:'4', 53:'5', 54:'6', 55:'7', 56:'8', 57:'9', 58:'a', 117:'u', 85:'u', 105: 'i', 73:'i'}
 
     winNameIntersect = "intersection"
     winNameUnion = "union"
